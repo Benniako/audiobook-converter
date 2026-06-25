@@ -4,11 +4,13 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.models.book import Book, BookStatus
+from app.models.user import User
 from app.models.chapter import Chapter
 from app.models.conversion_job import ConversionJob, JobStatus
 from app.services.ebook_parser import parse_ebook
 from app.services.audio_assembler import assemble_audiobook
 from app.tts.registry import get_provider
+from app.services.email_service import send_conversion_notification
 from workers.celery_app import celery_app
 
 settings = get_settings()
@@ -116,6 +118,11 @@ def convert_book(self, book_id: str):
         job.progress = 1.0
         session.commit()
 
+        # Send success email
+        user = session.execute(select(User).where(User.id == book.user_id)).scalar_one()
+        import asyncio
+        asyncio.run(send_conversion_notification(user.email, book.title, "done", str(book.id)))
+
     except Exception as exc:
         session.rollback()
         book = session.execute(select(Book).where(Book.id == book_id)).scalar_one()
@@ -126,6 +133,14 @@ def convert_book(self, book_id: str):
                 job.status = JobStatus.failed
                 job.error_message = str(exc)
             session.commit()
+
+            # Send failure email
+            user = session.execute(select(User).where(User.id == book.user_id)).scalar_one()
+            try:
+                import asyncio
+                asyncio.run(send_conversion_notification(user.email, book.title, "failed", str(book.id), error=str(exc)))
+            except Exception:
+                pass
         raise exc
     finally:
         session.close()

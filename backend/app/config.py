@@ -18,6 +18,12 @@ class Settings(BaseSettings):
     translation_provider: str = "libre"  # libre, openai, google
     libre_translate_url: str = ""
     google_api_key: str = ""
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = "noreply@audiobook-converter.app"
+    app_url: str = "http://localhost:3000"
 
     class Config:
         env_file = ".env"
