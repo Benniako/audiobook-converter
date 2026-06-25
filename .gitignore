@@ -38,3 +38,9 @@ Thumbs.db
 
 # Tools / portable Python
 tools/
+
+# Brainstorm visual companion
+.superpowers/
+
+# Local SQLite database
+*.db
