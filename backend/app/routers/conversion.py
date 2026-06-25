@@ -30,7 +30,7 @@ async def start_conversion(
 
     # Validate TTS provider
     provider = get_provider(tts_provider)
-    if not provider and tts_provider not in ("kokoro", "openai", "elevenlabs", "custom"):
+    if not provider:
         raise HTTPException(status_code=400, detail=f"Unknown TTS provider: {tts_provider}")
 
     # Update book with selected provider

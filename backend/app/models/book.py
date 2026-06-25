@@ -16,6 +16,10 @@ class BookStatus(str, enum.Enum):
 
 class TTSProvider(str, enum.Enum):
     kokoro = "kokoro"
+    chatterbox = "chatterbox"
+    qwen3 = "qwen3"
+    omnivoice = "omnivoice"
+    cosyvoice = "cosyvoice"
     openai = "openai"
     elevenlabs = "elevenlabs"
     custom = "custom"

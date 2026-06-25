@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     admin_email: str = "admin@example.com"
     kokoro_model_path: str = ""
     openai_api_key: str = ""
+    chatterbox_model: str = "turbo"
+    qwen3_model: str = "1.7B"
+    cosyvoice_model_path: str = ""
 
     class Config:
         env_file = ".env"
