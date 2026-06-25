@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { BookOpen, Clock, FileText } from "lucide-react";
+import { BookOpen, Clock, Headphones, Sparkles } from "lucide-react";
 
 interface BookCardProps {
   id: string;
@@ -11,34 +11,67 @@ interface BookCardProps {
   duration_seconds: number;
 }
 
+const GRADIENTS = [
+  "from-indigo-500 to-purple-600",
+  "from-emerald-500 to-teal-600",
+  "from-orange-500 to-pink-600",
+  "from-blue-500 to-cyan-600",
+  "from-rose-500 to-red-600",
+  "from-violet-500 to-fuchsia-600",
+];
+
 export default function BookCard({ id, title, author, status, duration_seconds }: BookCardProps) {
   const router = useRouter();
-  const statusColors: Record<string, string> = {
-    ready: "bg-green-100 text-green-700",
-    processing: "bg-yellow-100 text-yellow-700",
-    uploading: "bg-blue-100 text-blue-700",
-    error: "bg-red-100 text-red-700",
+  const gradient = GRADIENTS[id.charCodeAt(id.length - 1) % GRADIENTS.length];
+
+  const statusConfig: Record<string, { label: string; className: string }> = {
+    ready: { label: "Ready", className: "badge-success" },
+    processing: { label: "Converting", className: "badge-warning" },
+    uploading: { label: "Uploading", className: "badge-info" },
+    error: { label: "Failed", className: "badge-error" },
   };
+
+  const cfg = statusConfig[status] || { label: status, className: "badge-info" };
 
   return (
     <div
       onClick={() => router.push(`/books/${id}`)}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition cursor-pointer"
+      className="group card card-hover overflow-hidden cursor-pointer animate-fade-in"
     >
-      <div className="flex items-start justify-between mb-3">
-        <div className="p-2 bg-indigo-50 rounded-lg">
-          <BookOpen className="w-6 h-6 text-indigo-600" />
+      {/* Top gradient bar */}
+      <div className={`h-2 bg-gradient-to-r ${gradient}`} />
+
+      <div className="p-5">
+        <div className="flex items-start justify-between mb-4">
+          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg`}>
+            <BookOpen className="w-5 h-5 text-white" />
+          </div>
+          <span className={cfg.className}>{cfg.label}</span>
         </div>
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[status] || "bg-gray-100"}`}>
-          {status}
-        </span>
-      </div>
-      <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">{title}</h3>
-      <p className="text-sm text-gray-500 mb-3">{author}</p>
-      <div className="flex items-center gap-2 text-xs text-gray-400">
-        <Clock className="w-3.5 h-3.5" />
-        <span>{Math.floor(duration_seconds / 60)} min</span>
-        <FileText className="w-3.5 h-3.5 ml-2" />
+
+        <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2 group-hover:text-[var(--primary)] transition-colors">
+          {title}
+        </h3>
+        <p className="text-sm text-[var(--text-secondary)] mb-4">{author}</p>
+
+        <div className="flex items-center justify-between pt-3 border-t border-[var(--border)]">
+          <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
+            <Clock className="w-3.5 h-3.5" />
+            <span>{Math.floor(duration_seconds / 60)} min</span>
+          </div>
+          {status === "ready" && (
+            <div className="flex items-center gap-1.5 text-xs text-emerald-600">
+              <Headphones className="w-3.5 h-3.5" />
+              <span>Listen</span>
+            </div>
+          )}
+          {status === "processing" && (
+            <div className="flex items-center gap-1.5 text-xs text-amber-600">
+              <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+              <span>Processing</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
