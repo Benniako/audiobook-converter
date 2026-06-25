@@ -3,7 +3,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import init_db
 from app.config import get_settings
-from app.routers import auth, books
+from app.routers import auth, books, tts
+from app.tts.registry import init_providers
 
 settings = get_settings()
 
@@ -11,6 +12,7 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+    init_providers()
     yield
 
 
@@ -26,6 +28,7 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(books.router)
+app.include_router(tts.router)
 
 
 @app.get("/api/health")
