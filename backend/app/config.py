@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     chatterbox_model: str = "turbo"
     qwen3_model: str = "1.7B"
     cosyvoice_model_path: str = ""
+    translation_provider: str = "libre"  # libre, openai, google
+    libre_translate_url: str = ""
+    google_api_key: str = ""
 
     class Config:
         env_file = ".env"

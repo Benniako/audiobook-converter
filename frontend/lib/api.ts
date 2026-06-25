@@ -93,11 +93,15 @@ class ApiClient {
   }
 
   // Conversion
-  startConversion(bookId: string, ttsProvider: string = "kokoro") {
-    return this.request<{ message: string; book_id: string }>(
-      `/api/books/${bookId}/convert?tts_provider=${ttsProvider}`,
-      { method: "POST" }
-    );
+  startConversion(bookId: string, ttsProvider: string = "kokoro", language?: string, targetLanguage?: string) {
+    let url = `/api/books/${bookId}/convert?tts_provider=${ttsProvider}`;
+    if (language) url += `&language=${language}`;
+    if (targetLanguage) url += `&target_language=${targetLanguage}`;
+    return this.request<{ message: string; book_id: string }>(url, { method: "POST" });
+  }
+
+  getLanguages() {
+    return this.request<Array<{ code: string; name: string; native: string; flag: string; tts: string[] }>>("/api/languages/");
   }
 
   getConversionStatus(bookId: string) {

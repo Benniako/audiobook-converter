@@ -8,7 +8,7 @@ import ChapterList from "@/components/ChapterList";
 import ProgressBar from "@/components/ProgressBar";
 import { useToast } from "@/components/Toast";
 import ThemeToggle from "@/components/ThemeToggle";
-import { ArrowLeft, BookOpen, Clock, Headphones, Info, Download, ChevronDown } from "lucide-react";
+import { ArrowLeft, BookOpen, Clock, Headphones, Info, Download, ChevronDown, Globe } from "lucide-react";
 
 interface Chapter { id: string; index: number; title: string; audio_path: string | null; duration_seconds: number; }
 interface BookData {

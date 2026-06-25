@@ -11,6 +11,8 @@ class BookOut(BaseModel):
     cover_url: Optional[str]
     status: str
     tts_provider: str
+    language: str = "en"
+    target_language: Optional[str] = None
     duration_seconds: int
     created_at: datetime
 

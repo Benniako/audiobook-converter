@@ -18,6 +18,8 @@ router = APIRouter(prefix="/api/books", tags=["conversion"])
 async def start_conversion(
     book_id: UUID,
     tts_provider: str = "kokoro",
+    language: str = "en",
+    target_language: str | None = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -33,8 +35,10 @@ async def start_conversion(
     if not provider:
         raise HTTPException(status_code=400, detail=f"Unknown TTS provider: {tts_provider}")
 
-    # Update book with selected provider
+    # Update book with selected provider and language settings
     book.tts_provider = TTSProviderEnum(tts_provider)
+    book.language = language
+    book.target_language = target_language
     book.status = "processing"
 
     # Create or update conversion job

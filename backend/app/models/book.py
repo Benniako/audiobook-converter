@@ -37,6 +37,8 @@ class Book(Base):
     original_file: Mapped[str] = mapped_column(String(1000), nullable=False)
     tts_provider: Mapped[TTSProvider] = mapped_column(SAEnum(TTSProvider), default=TTSProvider.kokoro)
     tts_provider_id: Mapped[str] = mapped_column(String(100), nullable=True)  # FK to custom_tts if custom
+    language: Mapped[str] = mapped_column(String(10), default="en")  # ISO 639-1 source language
+    target_language: Mapped[str] = mapped_column(String(10), nullable=True)  # ISO 639-1 translation target, null = no translation
     duration_seconds: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

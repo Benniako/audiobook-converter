@@ -48,6 +48,29 @@ def convert_book(self, book_id: str):
             session.add(chapter)
         session.commit()
 
+        # 1b. Translate chapters if target language specified
+        if book.target_language and book.target_language != book.language:
+            job.status = JobStatus.parsing
+            job.progress = 0.08
+            session.commit()
+
+            from app.services.translation_service import TranslationService
+            translator = TranslationService()
+
+            chapters = session.execute(
+                select(Chapter).where(Chapter.book_id == book.id).order_by(Chapter.index)
+            ).scalars().all()
+
+            import asyncio
+            for idx, chapter in enumerate(chapters):
+                job.progress = 0.08 + (idx / total) * 0.07
+                session.commit()
+                translated = asyncio.run(translator.translate(chapter.text, book.language, book.target_language))
+                chapter.text = translated
+                translated_title = asyncio.run(translator.translate(chapter.title, book.language, book.target_language))
+                chapter.title = translated_title[:500]
+            session.commit()
+
         # 2. Synthesize each chapter
         job.status = JobStatus.synthesizing
         session.commit()
