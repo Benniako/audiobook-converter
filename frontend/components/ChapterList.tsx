@@ -26,6 +26,7 @@ export default function ChapterList({ chapters, currentChapterId, isPlaying, onP
         return (
           <button
             key={ch.id}
+            data-chapter-id={ch.id}
             onClick={() => onPlay(ch.id)}
             className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-left transition-all duration-150 group ${
               isCurrent
