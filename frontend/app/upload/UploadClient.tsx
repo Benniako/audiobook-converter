@@ -15,6 +15,8 @@ const PROVIDERS = [
   { id: "chatterbox", name: "Chatterbox Turbo", quality: "Excellent (9/10)", langs: 23, hardware: "GPU 4GB+", license: "MIT", tier: "pro", desc: "SOTA quality, voice cloning", icon: Sparkles, color: "from-emerald-500 to-teal-600" },
   { id: "qwen3", name: "Qwen3-TTS 1.7B", quality: "Excellent (9/10)", langs: 10, hardware: "GPU 4-8GB", license: "Apache-2.0", tier: "pro", desc: "97ms latency, instruction control", icon: Cpu, color: "from-violet-500 to-fuchsia-600" },
   { id: "omnivoice", name: "OmniVoice", quality: "Very Good (8/10)", langs: 600, hardware: "GPU (CUDA/MPS)", license: "Apache-2.0", tier: "pro", desc: "600+ languages, 40x speed", icon: Globe, color: "from-blue-500 to-cyan-600" },
+  { id: "styletts2", name: "StyleTTS 2", quality: "Excellent (9/10)", langs: 14, hardware: "GPU 4GB+", license: "MIT", tier: "pro", desc: "Human-level synthesis, style diffusion", icon: Sparkles, color: "from-rose-500 to-pink-600" },
+  { id: "bark", name: "Bark by Suno", quality: "Good (7/10)", langs: 13, hardware: "GPU 8-12GB", license: "MIT", tier: "pro", desc: "Speech + music + sound effects", icon: Globe, color: "from-orange-500 to-amber-600" },
   { id: "cosyvoice", name: "CosyVoice 300M", quality: "Excellent (9/10)", langs: 10, hardware: "GPU 8GB+", license: "Apache-2.0", tier: "pro", desc: "Instruction-controlled, 150ms", icon: Sparkles, color: "from-rose-500 to-pink-600" },
   { id: "openai", name: "OpenAI TTS", quality: "Very Good (8/10)", langs: 6, hardware: "Cloud API", license: "Proprietary", tier: "pro", desc: "Cloud-based, requires key", icon: Globe, color: "from-orange-500 to-red-600" },
 ];

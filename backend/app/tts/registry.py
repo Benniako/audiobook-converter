@@ -6,6 +6,8 @@ from app.tts.chatterbox import ChatterboxProvider
 from app.tts.qwen3 import Qwen3Provider
 from app.tts.omnivoice import OmniVoiceProvider
 from app.tts.cosyvoice import CosyVoiceProvider
+from app.tts.styletts2 import StyleTTS2Provider
+from app.tts.bark import BarkProvider
 from app.config import get_settings
 
 _providers: Dict[str, TTSProvider] = {}
@@ -56,6 +58,24 @@ def init_providers():
         "license": "Apache-2.0",
         "tier": "pro",
         "description": "600+ languages, 40x real-time. Broadest language coverage.",
+    })
+    _register("styletts2", StyleTTS2Provider(), {
+        "name": "StyleTTS 2",
+        "quality": "Excellent (9/10)",
+        "languages": 14,
+        "hardware": "GPU 4GB+ VRAM",
+        "license": "MIT",
+        "tier": "pro",
+        "description": "Human-level synthesis. Style diffusion. MIT licensed.",
+    })
+    _register("bark", BarkProvider(), {
+        "name": "Bark by Suno",
+        "quality": "Good (7/10)",
+        "languages": 13,
+        "hardware": "GPU 8-12GB VRAM",
+        "license": "MIT",
+        "tier": "pro",
+        "description": "Speech + music + sound effects. 100+ voices. Creative.",
     })
     _register("cosyvoice", CosyVoiceProvider(), {
         "name": "CosyVoice 300M",

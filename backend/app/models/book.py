@@ -19,6 +19,8 @@ class TTSProvider(str, enum.Enum):
     chatterbox = "chatterbox"
     qwen3 = "qwen3"
     omnivoice = "omnivoice"
+    styletts2 = "styletts2"
+    bark = "bark"
     cosyvoice = "cosyvoice"
     openai = "openai"
     elevenlabs = "elevenlabs"
