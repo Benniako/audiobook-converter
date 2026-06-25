@@ -7,6 +7,7 @@ import BookCard from "@/components/BookCard";
 import ThemeToggle from "@/components/ThemeToggle";
 import { BookCardSkeleton } from "@/components/Skeleton";
 import { useToast } from "@/components/Toast";
+import WelcomeTour from "@/components/WelcomeTour";
 import { Plus, LogOut, BookOpen, Library, Eye, RefreshCw } from "lucide-react";
 
 interface Book {
@@ -58,6 +59,7 @@ export default function DashboardClient() {
 
   return (
     <div className="min-h-screen bg-[var(--surface-alt)]">
+      <WelcomeTour />
       <header className="bg-[var(--surface)] border-b border-[var(--border)] sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -72,7 +74,7 @@ export default function DashboardClient() {
           <div className="flex items-center gap-1 sm:gap-2">
             <button onClick={() => router.push("/admin")} className="btn-ghost text-sm hidden sm:flex">Admin</button>
             <ThemeToggle />
-            <button onClick={() => router.push("/upload")} className="btn-primary text-sm flex items-center gap-1.5">
+            <button id="upload-btn" onClick={() => router.push("/upload")} className="btn-primary text-sm flex items-center gap-1.5">
               <Plus className="w-4 h-4" /> <span className="hidden sm:inline">Upload</span>
             </button>
             {!isDemo && <button onClick={handleLogout} className="btn-ghost p-2"><LogOut className="w-4 h-4" /></button>}
