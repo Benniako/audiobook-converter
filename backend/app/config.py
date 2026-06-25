@@ -3,8 +3,8 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/audiobook"
-    database_url_sync: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/audiobook"
+    database_url: str = "sqlite+aiosqlite:///./audiobook.db"
+    database_url_sync: str = "sqlite:///./audiobook.db"
     redis_url: str = "redis://localhost:6379/0"
     secret_key: str = "change-this-to-a-random-secret-key"
     upload_dir: str = "./uploads"

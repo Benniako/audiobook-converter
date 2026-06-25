@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from sqlalchemy import String, Enum as SAEnum, DateTime, func, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID
+
 from app.database import Base
 import enum
 
@@ -30,8 +30,8 @@ class TTSProvider(str, enum.Enum):
 class Book(Base):
     __tablename__ = "books"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False)
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     author: Mapped[str] = mapped_column(String(500), default="Unknown")
     cover_url: Mapped[str] = mapped_column(String(1000), nullable=True)
