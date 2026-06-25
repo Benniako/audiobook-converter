@@ -3,6 +3,7 @@
 interface ProgressBarProps {
   progress: number;
   status: string;
+  eta?: string;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
@@ -14,7 +15,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   failed: { label: "Failed", color: "from-red-400 to-red-500" },
 };
 
-export default function ProgressBar({ progress, status }: ProgressBarProps) {
+export default function ProgressBar({ progress, status, eta }: ProgressBarProps) {
   const config = STATUS_CONFIG[status] || { label: status, color: "from-gray-400 to-gray-500" };
   const pct = Math.min(100, Math.round(progress * 100));
 
@@ -23,12 +24,15 @@ export default function ProgressBar({ progress, status }: ProgressBarProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${config.color} animate-pulse`} />
-          <span className="text-sm font-medium text-gray-800">{config.label}</span>
+          <span className="text-sm font-medium text-[var(--text)]">{config.label}</span>
         </div>
-        <span className="text-sm font-mono text-[var(--text-muted)]">{pct}%</span>
+        <div className="flex items-center gap-3">
+          {eta && <span className="text-xs text-[var(--text-muted)]">~{eta} remaining</span>}
+          <span className="text-sm font-mono text-[var(--text-muted)]">{pct}%</span>
+        </div>
       </div>
 
-      <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden">
+      <div className="relative h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
         <div
           className={`h-full bg-gradient-to-r ${config.color} rounded-full transition-all duration-700 ease-out`}
           style={{ width: `${pct}%` }}

@@ -119,7 +119,14 @@ export default function UploadClient() {
           </h2>
 
           <div className="grid sm:grid-cols-2 gap-4">
-            <LangSelector value={srcLang} onChange={setSrcLang} open={showSrcPicker} setOpen={setShowSrcPicker} label="Book Language" />
+            <div>
+              <LangSelector value={srcLang} onChange={setSrcLang} open={showSrcPicker} setOpen={setShowSrcPicker} label="Book Language" />
+              <button onClick={async () => {
+                toast("Language detection requires the backend running with LibreTranslate", "info");
+              }} className="mt-1 text-[10px] text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors underline">
+                Detect automatically
+              </button>
+            </div>
 
             {/* Translation toggle */}
             <div>

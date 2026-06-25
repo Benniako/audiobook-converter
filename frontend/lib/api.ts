@@ -105,9 +105,15 @@ class ApiClient {
   }
 
   getConversionStatus(bookId: string) {
-    return this.request<{ status: string; progress: number; error_message: string | null }>(
+    return this.request<{ status: string; progress: number; error_message: string | null; queue_position?: number }>(
       `/api/books/${bookId}/status`
     );
+  }
+
+  detectLanguage(text: string) {
+    return this.request<{ language: string }>("/api/languages/detect", {
+      method: "POST", body: JSON.stringify({ text: text.slice(0, 1000) }),
+    });
   }
 
   // TTS Providers

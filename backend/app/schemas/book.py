@@ -39,3 +39,7 @@ class ConversionStatusOut(BaseModel):
     status: str
     progress: float
     error_message: Optional[str]
+
+
+class ConversionStatusDetailedOut(ConversionStatusOut):
+    queue_position: int = 0

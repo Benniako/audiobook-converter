@@ -6,6 +6,8 @@ import { api } from "@/lib/api";
 import AudioPlayer from "@/components/AudioPlayer";
 import ChapterList from "@/components/ChapterList";
 import ProgressBar from "@/components/ProgressBar";
+import SleepTimer from "@/components/SleepTimer";
+import ShortcutOverlay from "@/components/ShortcutOverlay";
 import { useToast } from "@/components/Toast";
 import ThemeToggle from "@/components/ThemeToggle";
 import { ArrowLeft, BookOpen, Clock, Headphones, Info, Download, ChevronDown, Globe } from "lucide-react";
@@ -51,7 +53,7 @@ export default function BookPlayerClient() {
   const [currentChapterId, setCurrentChapterId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [completedChapters, setCompletedChapters] = useState<Set<string>>(new Set());
-  const [conversionStatus, setConversionStatus] = useState<{ status: string; progress: number } | null>(null);
+  const [conversionStatus, setConversionStatus] = useState<{ status: string; progress: number; queue_position?: number } | null>(null);
   const [isDemo, setIsDemo] = useState(false);
   const [showFormatPicker, setShowFormatPicker] = useState(false);
   const [selectedFormat, setSelectedFormat] = useState("m4b");
@@ -148,7 +150,9 @@ export default function BookPlayerClient() {
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
             {isPlaying && <span className="hidden sm:flex items-center gap-1 text-[10px] text-emerald-500"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Playing</span>}
+            <SleepTimer onSleep={() => setIsPlaying(false)} />
             <ThemeToggle />
+            <ShortcutOverlay />
             {book.status === "ready" && !isDemo && (
               <div className="relative">
                 <button onClick={() => setShowFormatPicker(!showFormatPicker)} className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1">
@@ -182,7 +186,18 @@ export default function BookPlayerClient() {
         )}
 
         {(book.status === "processing" || conversionStatus) && !isDemo && (
-          <ProgressBar progress={conversionStatus?.progress ?? 0} status={conversionStatus?.status ?? "queued"} />
+          <ProgressBar
+            progress={conversionStatus?.progress ?? 0}
+            status={conversionStatus?.status ?? "queued"}
+            eta={(() => {
+              const p = conversionStatus?.progress ?? 0;
+              const s = conversionStatus?.status ?? "queued";
+              if (p <= 0 || s === "done" || s === "failed") return undefined;
+              const remaining = Math.max(1, Math.round((1 - p) / p * (s === "queued" ? 2 : s === "parsing" ? 5 : 30)));
+              if (remaining < 60) return `${remaining}s`;
+              return `${Math.round(remaining / 60)}m ${remaining % 60}s`;
+            })()}
+          />
         )}
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-[var(--text-secondary)]">
@@ -190,6 +205,10 @@ export default function BookPlayerClient() {
           <span className="hidden sm:inline text-[var(--border)]">|</span>
           <div className="flex items-center gap-1.5"><Clock className="w-4 h-4" /><span>{Math.floor(totalDuration / 60)} min</span></div>
           {completedCount > 0 && <><span className="hidden sm:inline text-[var(--border)]">|</span><span className="text-emerald-600 dark:text-emerald-400">{Math.round((completedCount / book.chapters.length) * 100)}% done</span></>}
+          <span className="hidden sm:inline text-[var(--border)]">|</span>
+          {conversionStatus?.queue_position && conversionStatus.queue_position > 0 && (
+            <span className="text-amber-600 dark:text-amber-400 text-xs">#{conversionStatus.queue_position} in queue</span>
+          )}
           <span className="hidden sm:inline text-[var(--border)]">|</span>
           <span className="text-[10px] text-[var(--text-muted)]">Space: ⏯ · ← →: skip</span>
         </div>

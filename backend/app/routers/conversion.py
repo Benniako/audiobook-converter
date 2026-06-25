@@ -7,7 +7,7 @@ from app.dependencies import get_current_user
 from app.models.user import User
 from app.models.book import Book, TTSProvider as TTSProviderEnum
 from app.models.conversion_job import ConversionJob, JobStatus
-from app.schemas.book import ConversionStatusOut
+from app.schemas.book import ConversionStatusOut, ConversionStatusDetailedOut
 from app.tts.registry import get_provider
 from workers.tts_worker import convert_book
 
@@ -81,10 +81,22 @@ async def get_conversion_status(
     job = job_result.scalar_one_or_none()
 
     if not job:
-        return ConversionStatusOut(status="unknown", progress=0.0)
+        return ConversionStatusDetailedOut(status="unknown", progress=0.0)
 
-    return ConversionStatusOut(
+    # Calculate queue position
+    queue_position = 0
+    if job.status.value == "queued":
+        queue_result = await db.execute(
+            select(ConversionJob).where(
+                ConversionJob.status == "queued",
+                ConversionJob.created_at < job.created_at,
+            )
+        )
+        queue_position = len(queue_result.scalars().all()) + 1
+
+    return ConversionStatusDetailedOut(
         status=job.status.value,
         progress=job.progress,
         error_message=job.error_message,
+        queue_position=queue_position,
     )
