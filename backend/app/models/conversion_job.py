@@ -24,6 +24,7 @@ class ConversionJob(Base):
     status: Mapped[JobStatus] = mapped_column(SAEnum(JobStatus), default=JobStatus.queued)
     progress: Mapped[float] = mapped_column(Float, default=0.0)
     error_message: Mapped[str] = mapped_column(Text, nullable=True)
+    voice_profile_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("voice_profiles.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

@@ -34,15 +34,21 @@ const STEPS = [
 export default function WelcomeTour() {
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     const seen = localStorage.getItem("welcomeTourSeen");
     if (!seen) {
       setStep(1);
       setVisible(true);
     }
-  }, []);
+  }, [mounted]);
 
   const getTargetRect = useCallback((id: string | null): DOMRect | null => {
     if (!id) return null;

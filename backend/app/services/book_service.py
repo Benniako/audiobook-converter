@@ -4,6 +4,7 @@ import aiofiles
 from fastapi import UploadFile, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from app.config import get_settings
 from app.models.book import Book, BookStatus
 from app.models.chapter import Chapter
@@ -37,9 +38,11 @@ async def get_user_books(db: AsyncSession, user_id: uuid.UUID) -> list[Book]:
     return list(result.scalars().all())
 
 
-async def get_book_detail(db: AsyncSession, book_id: uuid.UUID, user_id: uuid.UUID) -> Book | None:
+async def get_book_detail(db: AsyncSession, book_id: str, user_id: str) -> Book | None:
     result = await db.execute(
-        select(Book).where(Book.id == book_id, Book.user_id == user_id)
+        select(Book)
+        .where(Book.id == book_id, Book.user_id == user_id)
+        .options(selectinload(Book.chapters))
     )
     return result.scalar_one_or_none()
 

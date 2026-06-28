@@ -8,6 +8,7 @@ from app.tts.omnivoice import OmniVoiceProvider
 from app.tts.cosyvoice import CosyVoiceProvider
 from app.tts.styletts2 import StyleTTS2Provider
 from app.tts.bark import BarkProvider
+from app.tts.vox_clone import VoxCloneProvider
 from app.config import get_settings
 
 _providers: Dict[str, TTSProvider] = {}
@@ -98,6 +99,18 @@ def init_providers():
             "tier": "pro",
             "description": "OpenAI's cloud TTS API. Requires API key and internet.",
         })
+
+    # Voice cloning — needs uploaded audio samples to function
+    _register("vox_clone", VoxCloneProvider(), {
+        "name": "Vox Clone (XTTS-v2)",
+        "quality": "Excellent (9/10, zero-shot)",
+        "languages": 17,
+        "hardware": "GPU 4GB+ (CPU slower)",
+        "license": "CPML (Coqui Public Model License)",
+        "tier": "pro",
+        "description": "Clone any voice from a few seconds of audio. Local, zero-shot. Coqui XTTS-v2.",
+        "needs_voice_profile": True,
+    })
 
 
 def _register(provider_id: str, provider: TTSProvider, meta: dict):

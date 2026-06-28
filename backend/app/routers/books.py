@@ -9,7 +9,7 @@ from app.dependencies import get_current_user
 from app.models.user import User
 from app.models.book import Book
 from app.models.chapter import Chapter
-from app.schemas.book import BookOut, BookDetailOut
+from app.schemas.book import BookOut, BookDetailOut, PlaybackSpeedUpdate
 from app.services.book_service import save_upload_file, get_user_books, get_book_detail, delete_book
 from app.config import get_settings
 
@@ -49,7 +49,7 @@ async def get_book(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    book = await get_book_detail(db, book_id, current_user.id)
+    book = await get_book_detail(db, str(book_id), current_user.id)
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
     return book
@@ -61,7 +61,7 @@ async def remove_book(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    book = await get_book_detail(db, book_id, current_user.id)
+    book = await get_book_detail(db, str(book_id), current_user.id)
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
     await delete_book(book)
@@ -75,7 +75,7 @@ async def stream_chapter_audio(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    book = await get_book_detail(db, book_id, current_user.id)
+    book = await get_book_detail(db, str(book_id), current_user.id)
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
 
@@ -93,13 +93,156 @@ async def stream_chapter_audio(
     )
 
 
+@router.post("/{book_id}/chapters/{chapter_id}/split", status_code=200)
+async def split_chapter(
+    book_id: UUID,
+    chapter_id: UUID,
+    data: dict,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    book = await get_book_detail(db, str(book_id), current_user.id)
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+
+    at_position = data.get("at_position", 0)
+
+    result = await db.execute(
+        select(Chapter).where(Chapter.id == str(chapter_id), Chapter.book_id == str(book_id))
+    )
+    chapter = result.scalar_one_or_none()
+    if not chapter:
+        raise HTTPException(status_code=404, detail="Chapter not found")
+
+    if at_position <= 0 or at_position >= len(chapter.text):
+        raise HTTPException(status_code=400, detail="Invalid split position")
+
+    new_chapter = Chapter(
+        book_id=str(book_id),
+        index=chapter.index + 1,
+        title=f"{chapter.title} (cont.)",
+        text=chapter.text[at_position:],
+    )
+    chapter.text = chapter.text[:at_position]
+
+    result = await db.execute(
+        select(Chapter).where(
+            Chapter.book_id == str(book_id),
+            Chapter.index > chapter.index,
+        ).order_by(Chapter.index.desc())
+    )
+    for later_ch in result.scalars().all():
+        later_ch.index += 1
+
+    db.add(new_chapter)
+    await db.flush()
+    await db.refresh(new_chapter)
+    return {"message": "Chapter split", "new_chapter_id": str(new_chapter.id)}
+
+
+@router.post("/{book_id}/chapters/{chapter_id}/merge", status_code=200)
+async def merge_chapters(
+    book_id: UUID,
+    chapter_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    book = await get_book_detail(db, str(book_id), current_user.id)
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+
+    result = await db.execute(
+        select(Chapter).where(Chapter.id == str(chapter_id), Chapter.book_id == str(book_id))
+    )
+    chapter = result.scalar_one_or_none()
+    if not chapter:
+        raise HTTPException(status_code=404, detail="Chapter not found")
+
+    result = await db.execute(
+        select(Chapter).where(
+            Chapter.book_id == str(book_id),
+            Chapter.index == chapter.index + 1,
+        )
+    )
+    next_chapter = result.scalar_one_or_none()
+    if not next_chapter:
+        raise HTTPException(status_code=400, detail="No next chapter to merge with")
+
+    chapter.text += "\n\n" + next_chapter.text
+    await db.delete(next_chapter)
+
+    result = await db.execute(
+        select(Chapter).where(
+            Chapter.book_id == str(book_id),
+            Chapter.index > chapter.index,
+        ).order_by(Chapter.index)
+    )
+    for later_ch in result.scalars().all():
+        later_ch.index -= 1
+
+    await db.flush()
+    return {"message": "Chapters merged"}
+
+
+@router.put("/{book_id}/chapters/reorder", status_code=200)
+async def reorder_chapters(
+    book_id: UUID,
+    data: dict,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    book = await get_book_detail(db, str(book_id), current_user.id)
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+
+    chapter_ids = data.get("chapter_ids", [])
+    if not chapter_ids:
+        raise HTTPException(status_code=400, detail="chapter_ids is required")
+
+    # Fetch all chapters for this book
+    result = await db.execute(
+        select(Chapter).where(Chapter.book_id == str(book_id)).order_by(Chapter.index)
+    )
+    existing = result.scalars().all()
+    existing_map = {str(ch.id): ch for ch in existing}
+
+    # Validate all IDs exist
+    for cid in chapter_ids:
+        if cid not in existing_map:
+            raise HTTPException(status_code=400, detail=f"Chapter {cid} not found")
+
+    # Update indices
+    for i, cid in enumerate(chapter_ids):
+        existing_map[cid].index = i
+    await db.flush()
+    return {"message": "Chapters reordered"}
+
+
+@router.patch("/{book_id}/speed", response_model=BookOut)
+async def update_playback_speed(
+    book_id: UUID,
+    data: PlaybackSpeedUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    book = await get_book_detail(db, str(book_id), current_user.id)
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+
+    speed = max(0.25, min(3.0, data.speed))  # Clamp between 0.25x and 3.0x
+    book.playback_speed = speed
+    await db.flush()
+    await db.refresh(book)
+    return book
+
+
 @router.get("/{book_id}/download")
 async def download_audiobook(
     book_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    book = await get_book_detail(db, book_id, current_user.id)
+    book = await get_book_detail(db, str(book_id), current_user.id)
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
 

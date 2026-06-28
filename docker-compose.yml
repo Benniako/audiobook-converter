@@ -19,6 +19,7 @@ services:
 
   backend:
     build: ./backend
+    restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
@@ -35,6 +36,7 @@ services:
 
   worker:
     build: ./backend
+    restart: unless-stopped
     command: celery -A workers.celery_app worker --loglevel=info
     environment:
       - DATABASE_URL_SYNC=postgresql+psycopg2://postgres:postgres@db:5432/audiobook

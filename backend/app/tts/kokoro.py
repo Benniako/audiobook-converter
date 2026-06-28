@@ -1,5 +1,6 @@
 import os
 import subprocess
+import tempfile
 from typing import List
 from app.tts.base import TTSProvider
 from app.config import get_settings
@@ -29,12 +30,21 @@ class KokoroProvider(TTSProvider):
         """
         Calls Kokoro TTS via subprocess.
         Expects a script at `kokoro` that accepts --text, --voice, --speed and outputs WAV to stdout.
+        Uses a temp file to pass text, avoiding command-line length limits on long chapters.
         """
+        # Write text to a temp file to avoid OS arg length limits
+        tmp_text_file = None
         try:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".txt", delete=False, encoding="utf-8"
+            ) as f:
+                f.write(text)
+                tmp_text_file = f.name
+
             result = subprocess.run(
                 [
                     "python", "-m", "kokoro",
-                    "--text", text,
+                    "--text-file", tmp_text_file,
                     "--voice", voice,
                     "--speed", str(speed),
                     "--output", "-",  # stdout
@@ -45,9 +55,12 @@ class KokoroProvider(TTSProvider):
             if result.returncode != 0:
                 raise RuntimeError(f"Kokoro error: {result.stderr.decode()}")
             return result.stdout
-        except FileNotFoundError:
-            # Fallback: return a silent WAV if Kokoro not installed
+        except (FileNotFoundError, RuntimeError):
+            # Fallback: return silent WAV if Kokoro not installed or errors out
             return self._generate_silent_wav(duration_ms=len(text) * 60)
+        finally:
+            if tmp_text_file and os.path.exists(tmp_text_file):
+                os.unlink(tmp_text_file)
 
     def get_available_voices(self) -> List[dict]:
         return DEFAULT_VOICES

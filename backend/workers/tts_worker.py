@@ -1,5 +1,6 @@
 import os
 import json
+import asyncio
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from app.config import get_settings
@@ -9,7 +10,7 @@ from app.models.chapter import Chapter
 from app.models.conversion_job import ConversionJob, JobStatus
 from app.services.ebook_parser import parse_ebook
 from app.services.audio_assembler import assemble_audiobook
-from app.tts.registry import get_provider
+from app.tts.registry import get_provider, init_providers
 from app.services.email_service import send_conversion_notification
 from workers.celery_app import celery_app
 
@@ -20,6 +21,7 @@ sync_engine = create_engine(settings.database_url_sync)
 @celery_app.task(bind=True, max_retries=1)
 def convert_book(self, book_id: str):
     """Main conversion task: parse -> synthesize -> assemble."""
+    init_providers()  # Ensure TTS providers are registered
     session = Session(sync_engine)
     try:
         book = session.execute(select(Book).where(Book.id == book_id)).scalar_one()
@@ -63,7 +65,6 @@ def convert_book(self, book_id: str):
                 select(Chapter).where(Chapter.book_id == book.id).order_by(Chapter.index)
             ).scalars().all()
 
-            import asyncio
             for idx, chapter in enumerate(chapters):
                 job.progress = 0.08 + (idx / total) * 0.07
                 session.commit()
@@ -93,7 +94,10 @@ def convert_book(self, book_id: str):
             job.progress = 0.1 + (idx / total) * 0.8
             session.commit()
 
-            audio_bytes = provider.synthesize(chapter.text)
+            provider_kwargs = {}
+            if job and job.voice_profile_id:
+                provider_kwargs["voice_profile_id"] = job.voice_profile_id
+            audio_bytes = asyncio.run(provider.synthesize(chapter.text, **provider_kwargs))
             chapter_path = os.path.join(audio_dir, f"chapter_{chapter.index:04d}.wav")
             with open(chapter_path, "wb") as f:
                 f.write(audio_bytes)
@@ -120,7 +124,6 @@ def convert_book(self, book_id: str):
 
         # Send success email
         user = session.execute(select(User).where(User.id == book.user_id)).scalar_one()
-        import asyncio
         asyncio.run(send_conversion_notification(user.email, book.title, "done", str(book.id)))
 
     except Exception as exc:
@@ -137,7 +140,6 @@ def convert_book(self, book_id: str):
             # Send failure email
             user = session.execute(select(User).where(User.id == book.user_id)).scalar_one()
             try:
-                import asyncio
                 asyncio.run(send_conversion_notification(user.email, book.title, "failed", str(book.id), error=str(exc)))
             except Exception:
                 pass

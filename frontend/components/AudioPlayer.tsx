@@ -10,13 +10,15 @@ interface AudioPlayerProps {
   onTogglePlay?: () => void;
   onEnded?: () => void;
   downloadUrl?: string;
+  initialSpeed?: number;
+  onSpeedChange?: (speed: number) => void;
 }
 
-export default function AudioPlayer({ audioUrl, title, playing = false, onTogglePlay, onEnded, downloadUrl }: AudioPlayerProps) {
+export default function AudioPlayer({ audioUrl, title, playing = false, onTogglePlay, onEnded, downloadUrl, initialSpeed = 1, onSpeedChange }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [speed, setSpeed] = useState(1);
+  const [speed, setSpeed] = useState(initialSpeed);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const prevPlaying = useRef(playing);
 
@@ -30,6 +32,11 @@ export default function AudioPlayer({ audioUrl, title, playing = false, onToggle
     }
     prevPlaying.current = playing;
   }, [playing]);
+
+  // Sync internal speed when initialSpeed prop changes
+  useEffect(() => {
+    setSpeed(initialSpeed);
+  }, [initialSpeed]);
 
   useEffect(() => {
     if (audioRef.current) audioRef.current.playbackRate = speed;
@@ -126,7 +133,7 @@ export default function AudioPlayer({ audioUrl, title, playing = false, onToggle
                 <div className="fixed inset-0 z-10" onClick={() => setShowSpeedMenu(false)} />
                 <div className="absolute bottom-full right-0 mb-2 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-xl z-20 py-1 min-w-[80px]">
                   {[0.5, 0.75, 1, 1.25, 1.5, 2].map((s) => (
-                    <button key={s} onClick={() => { setSpeed(s); setShowSpeedMenu(false); }}
+                    <button key={s} onClick={() => { setSpeed(s); setShowSpeedMenu(false); onSpeedChange?.(s); }}
                       className={`w-full px-4 py-1.5 text-sm text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${speed === s ? "text-[var(--primary)] font-semibold" : "text-[var(--text-secondary)]"}`}>{s}x</button>
                   ))}
                 </div>

@@ -76,14 +76,16 @@ class ApiClient {
   listBooks() {
     return this.request<Array<{
       id: string; title: string; author: string; cover_url: string | null;
-      status: string; tts_provider: string; duration_seconds: number; created_at: string;
+      status: string; tts_provider: string; playback_speed: number;
+      duration_seconds: number; created_at: string;
     }>>("/api/books/");
   }
 
   getBook(id: string) {
     return this.request<{
       id: string; title: string; author: string; cover_url: string | null;
-      status: string; tts_provider: string; duration_seconds: number;
+      status: string; tts_provider: string; playback_speed: number;
+      duration_seconds: number;
       chapters: Array<{ id: string; index: number; title: string; audio_path: string | null; duration_seconds: number }>;
     }>(`/api/books/${id}`);
   }
@@ -92,11 +94,66 @@ class ApiClient {
     return this.request<void>(`/api/books/${id}`, { method: "DELETE" });
   }
 
+  updatePlaybackSpeed(bookId: string, speed: number) {
+    return this.request<{
+      id: string; title: string; author: string; cover_url: string | null;
+      status: string; tts_provider: string; playback_speed: number;
+      duration_seconds: number; created_at: string;
+    }>(`/api/books/${bookId}/speed`, {
+      method: "PATCH",
+      body: JSON.stringify({ speed }),
+    });
+  }
+
+  // Bookmarks
+  listBookmarks(bookId: string) {
+    return this.request<Array<{
+      id: string; book_id: string; chapter_id: string;
+      position_seconds: number; note: string | null; created_at: string;
+    }>>(`/api/books/${bookId}/bookmarks`);
+  }
+
+  createBookmark(bookId: string, data: { chapter_id: string; position_seconds: number; note?: string }) {
+    return this.request<{
+      id: string; book_id: string; chapter_id: string;
+      position_seconds: number; note: string | null; created_at: string;
+    }>(`/api/books/${bookId}/bookmarks`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  deleteBookmark(bookId: string, bookmarkId: string) {
+    return this.request<void>(`/api/books/${bookId}/bookmarks/${bookmarkId}`, { method: "DELETE" });
+  }
+
+  splitChapter(bookId: string, chapterId: string, atPosition: number) {
+    return this.request<{ message: string; new_chapter_id: string }>(
+      `/api/books/${bookId}/chapters/${chapterId}/split`,
+      { method: "POST", body: JSON.stringify({ at_position: atPosition }) }
+    );
+  }
+
+  mergeChapters(bookId: string, chapterId: string) {
+    return this.request<{ message: string }>(
+      `/api/books/${bookId}/chapters/${chapterId}/merge`,
+      { method: "POST" }
+    );
+  }
+
+  reorderChapters(bookId: string, chapterIds: string[]) {
+    return this.request<void>(`/api/books/${bookId}/chapters/reorder`, {
+      method: "PUT",
+      body: JSON.stringify({ chapter_ids: chapterIds }),
+    });
+  }
+
   // Conversion
-  startConversion(bookId: string, ttsProvider: string = "kokoro", language?: string, targetLanguage?: string) {
+  startConversion(bookId: string, ttsProvider: string = "kokoro", language?: string, targetLanguage?: string, voiceProfileId?: string) {
     let url = `/api/books/${bookId}/convert?tts_provider=${ttsProvider}`;
     if (language) url += `&language=${language}`;
     if (targetLanguage) url += `&target_language=${targetLanguage}`;
+    if (voiceProfileId) url += `&voice_profile_id=${voiceProfileId}`;
     return this.request<{ message: string; book_id: string }>(url, { method: "POST" });
   }
 
@@ -121,6 +178,10 @@ class ApiClient {
     return this.request<Array<{ id: string; name: string; voices: Array<{ id: string; name: string }> }>>(
       "/api/tts/providers"
     );
+  }
+
+  getTtsPreviewUrl(providerId: string) {
+    return `${API_URL}/api/tts/preview/${providerId}`;
   }
 
   // Admin
@@ -167,6 +228,54 @@ class ApiClient {
 
   getDownloadUrl(bookId: string) {
     return `${API_URL}/api/books/${bookId}/download`;
+  }
+
+  // Voice Profiles
+  listVoiceProfiles() {
+    return this.request<Array<{
+      id: string; name: string; description: string | null;
+      status: string; sample_count: number; error_message: string | null;
+      created_at: string; updated_at: string;
+    }>>("/api/voices/profiles");
+  }
+
+  getVoiceProfile(id: string) {
+    return this.request<{
+      id: string; name: string; description: string | null;
+      status: string; sample_count: number; error_message: string | null;
+      created_at: string; updated_at: string;
+      audio_samples: Array<{ id: string; file_path: string; duration_seconds: number; created_at: string }>;
+    }>(`/api/voices/profiles/${id}`);
+  }
+
+  createVoiceProfile(data: { name: string; description?: string }) {
+    return this.request<{
+      id: string; name: string; description: string | null;
+      status: string; sample_count: number; created_at: string; updated_at: string;
+    }>("/api/voices/profiles", { method: "POST", body: JSON.stringify(data) });
+  }
+
+  uploadVoiceSamples(profileId: string, files: FileList | File[]) {
+    const formData = new FormData();
+    Array.from(files).forEach((f) => formData.append("files", f));
+    return this.request<{
+      id: string; name: string; status: string; sample_count: number; uploaded: number;
+    }>(`/api/voices/profiles/${profileId}/samples`, {
+      method: "POST",
+      body: formData,
+    });
+  }
+
+  deleteVoiceProfile(id: string) {
+    return this.request<void>(`/api/voices/profiles/${id}`, { method: "DELETE" });
+  }
+
+  retryVoiceExtraction(id: string) {
+    return this.request<{ message: string }>(`/api/voices/profiles/${id}/retry`, { method: "POST" });
+  }
+
+  getVoicePreviewUrl(profileId: string) {
+    return `${API_URL}/api/voices/profiles/${profileId}/preview`;
   }
 }
 

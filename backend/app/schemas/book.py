@@ -13,6 +13,7 @@ class BookOut(BaseModel):
     tts_provider: str
     language: str = "en"
     target_language: Optional[str] = None
+    playback_speed: float = 1.0
     duration_seconds: int
     created_at: datetime
 
@@ -35,6 +36,10 @@ class BookDetailOut(BookOut):
     chapters: list[ChapterOut] = []
 
 
+class PlaybackSpeedUpdate(BaseModel):
+    speed: float
+
+
 class ConversionStatusOut(BaseModel):
     status: str
     progress: float
@@ -43,3 +48,4 @@ class ConversionStatusOut(BaseModel):
 
 class ConversionStatusDetailedOut(ConversionStatusOut):
     queue_position: int = 0
+    estimated_remaining_seconds: Optional[int] = None

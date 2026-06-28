@@ -44,3 +44,4 @@ tools/
 
 # Local SQLite database
 *.db
+\n# Binary wheels\n*.whl

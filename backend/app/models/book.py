@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import String, Enum as SAEnum, DateTime, func, ForeignKey, Integer
+from sqlalchemy import String, Enum as SAEnum, DateTime, func, ForeignKey, Integer, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -41,6 +41,7 @@ class Book(Base):
     tts_provider_id: Mapped[str] = mapped_column(String(100), nullable=True)  # FK to custom_tts if custom
     language: Mapped[str] = mapped_column(String(10), default="en")  # ISO 639-1 source language
     target_language: Mapped[str] = mapped_column(String(10), nullable=True)  # ISO 639-1 translation target, null = no translation
+    playback_speed: Mapped[float] = mapped_column(Float, default=1.0)
     duration_seconds: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
